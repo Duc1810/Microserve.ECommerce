@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "R1GPwo6EQw8=",
+  "success": true,
+  "projectFilePath": "D:\\ShopMicroservices\\Microservice.Ecommerce\\Services\\Ecommerce.Order\\Order.Domain\\Order.Domain.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ACER\\.nuget\\packages\\mediatr\\10.0.0\\mediatr.10.0.0.nupkg.sha512",
+    "C:\\Users\\ACER\\.nuget\\packages\\mediatr.contracts\\1.0.0\\mediatr.contracts.1.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

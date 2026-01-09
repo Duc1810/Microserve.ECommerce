@@ -1,0 +1,51 @@
+﻿@page
+@model Web.Pages.Auth.DevLoginModel
+@{
+    ViewData["Title"] = "Dev Login (paste accessToken)";
+}
+
+<h2>Dev Login</h2>
+<p>Dán <code>accessToken</code> rồi bấm Save.</p>
+
+<form id="tokenForm" method="post">
+    @Html.AntiForgeryToken()
+    <div>
+        <label>accessToken</label><br />
+        <textarea id="accessToken" rows="5" style="width:100%"></textarea>
+    </div>
+    <button type="submit">Save</button>
+</form>
+
+@section Scripts {
+    <script>
+        document.getElementById('tokenForm').addEventListener('submit', function (e) {
+          e.preventDefault();
+
+          const token = document.getElementById('accessToken').value.trim();
+          if (!token) { alert('Token is empty'); return; }
+
+          const anti = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+          // client để SignalR dùng
+          localStorage.setItem('access_token', token);
+
+          // server-side cookie để HttpClient gọi API (nếu bạn đang dùng)
+          fetch('/Auth/DevLogin?handler=SetCookie', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'RequestVerificationToken': anti
+            },
+            body: JSON.stringify({ accessToken: token })
+          }).then(async r => {
+            if (!r.ok) {
+              console.error('SetCookie failed:', r.status, await r.text());
+              alert('Cannot save token cookie');
+            } else {
+              alert('Saved');
+              window.location.href = '/Notifications';
+            }
+          });
+        });
+    </script>
+}

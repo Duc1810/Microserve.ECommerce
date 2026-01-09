@@ -1,0 +1,17 @@
+﻿global using BuildingBlocks.Repository;
+global using BuildingBlocks.CQRS;
+global using Cart.Application.Commons;
+global using Cart.Application.Abtractions.Dtos;
+global using Cart.Domain.Entities;
+global using FluentValidation;
+global using BuildingBlocks.Identity;
+global using Order.Application.Dtos;
+global using System.Globalization;
+global using BuildingBlocks.Caching.Services;
+global using Cart.Application.Dtos;
+global using Cart.Application.Abstractions;
+global using BuildingBlocks.Results;
+global using Microsoft.Extensions.Logging;
+global using BuildingBlocks.Observability.ApiResponse;
+global using BuildingBlocks.Observability.Constants;
+global using System.Net;

@@ -1,0 +1,14 @@
+﻿global using BuildingBlocks.CQRS;
+global using BuildingBlocks.Identity;
+global using BuildingBlocks.Observability.ApiResponse;
+global using BuildingBlocks.Observability.Constants;
+global using BuildingBlocks.Repository;
+global using BuildingBlocks.Results;
+global using Mapster;
+global using Microsoft.Extensions.Logging;
+global using Notification.BLL.Commons.Dtos;
+global using Notification.BLL.Commons.Ports;
+global using Notification.BLL.Features.Notifications;
+global using Notification.Data.Enums;
+global using System.Net;
+global using FluentValidation;

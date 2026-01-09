@@ -1,0 +1,35 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "Services\\Ecommerce.Production\\Production.API\\Production.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Services\\Ecommerce.Authentication\\Authentication.API\\Authentication.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Services\\Ecommerce.Cart\\Cart.API\\Cart.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Services\\Ecommerce.Email\\Email.API\\Email.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Services\\Ecommerce.Notification\\Notification.API\\Notification.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Services\\Ecommerce.Notification\\Web\\Web.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Services\\Ecommerce.Order\\Order.API\\Order.API.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

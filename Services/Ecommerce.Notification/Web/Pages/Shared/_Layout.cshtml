@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Web</title>
+
+
+    <script defer src="~/js/site.js"></script>
+
+</head>
+<body>
+    <header>
+        <nav style="display:flex;gap:16px;align-items:center;">
+            <a href="/">Home</a>
+            <a href="/Notifications">Notifications</a>
+            <a href="/Auth/DevLogin">Dev Login</a>
+
+            <div id="notif-bell" style="margin-left:auto; position:relative; cursor:pointer;">
+                <span style="font-size:20px;">🔔</span>
+                <span id="notif-badge" style="position:absolute; top:-6px; right:-6px; background:red; color:#fff; border-radius:10px; padding:0 6px; font-size:12px; display:none;">0</span>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        @RenderBody()
+    </div>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

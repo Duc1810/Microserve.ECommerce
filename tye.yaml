@@ -1,0 +1,239 @@
+﻿name: microservice-ecommerce
+
+
+
+services:
+  - name: messagebroker
+    image: rabbitmq:management
+    bindings:
+      - port: 5672
+      - port: 15672
+    env:
+      - name: RABBITMQ_DEFAULT_USER
+        value: guest
+      - name: RABBITMQ_DEFAULT_PASS
+        value: guest
+
+  - name: basketdb
+    image: postgres:15
+    bindings:
+      - port: 5433
+    env:
+      - name: POSTGRES_USER
+        value: postgres
+      - name: POSTGRES_PASSWORD
+        value: postgres
+      - name: POSTGRES_DB
+        value: BasketDb
+
+  - name: orderdb
+    image: postgres:15
+    bindings:
+      - port: 5434
+    env:
+      - name: POSTGRES_USER
+        value: postgres
+      - name: POSTGRES_PASSWORD
+        value: postgres
+      - name: POSTGRES_DB
+        value: OrderDb
+
+  - name: authdb
+    image: postgres:15
+    bindings:
+      - port: 5435
+    env:
+      - name: POSTGRES_USER
+        value: postgres
+      - name: POSTGRES_PASSWORD
+        value: postgres
+      - name: POSTGRES_DB
+        value: AuthDb
+
+  - name: redis
+    image: redis:7-alpine
+
+    //args: ["redis-server", "--appendonly", "yes", "--requirepass", "redispass123", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    bindings:
+      - port: 6379
+    env:
+      - name: REDIS_REPLICATION_MODE
+        value: master
+      - name: REDIS_PASSWORD
+        value: redispass123
+
+  - name: consul
+    image: hashicorp/consul
+    //args: ["agent", "-server", "-bootstrap-expect=1", "-ui", "-client=0.0.0.0", "-node=consul"]
+    bindings:
+      - port: 8500
+
+
+  - name: authapi
+    project: Services/Ecommerce.Authentication/Authentication.API/Authentication.API.csproj
+    bindings:
+      - port: 5120
+    env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Development
+      - name: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+      - name: SERVICE_HOST
+        value: authAPI
+      - name: ConnectionStrings__DefaultConnection
+        value: "Host=authdb;Port=5432;Database=AuthDb;Username=postgres;Password=postgres;Pooling=true"
+      - name: AuthOptions__IssuerUri
+        value: http://authapi:8080
+      - name: AuthOptions__TokenEndpoint
+        value: http://authapi:8080/connect/token
+      - name: Authentication__RequireHttpsMetadata
+        value: "false"
+      - name: MessageBroker__Host
+        value: amqp://messagebroker:5672
+      - name: MessageBroker__UserName
+        value: guest
+      - name: MessageBroker__Password
+        value: guest
+
+  - name: productapi
+    project: Services/Ecommerce.Production/Production.API/Production.API.csproj
+    bindings:
+      - port: 5246 
+      - port: 5247  
+    env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Development
+
+      - name: ConnectionStrings__DefaultConnection
+        value: "Host=basketdb;Port=5432;Database=BasketDb;Username=postgres;Password=postgres;Pooling=true"
+      - name: Authentication__Issuer
+        value: http://authapi:8080
+      - name: Authentication__Jwks__Uri
+        value: http://authapi:8080/.well-known/openid-configuration/jwks
+      - name: Authentication__RequireHttpsMetadata
+        value: "false"
+      - name: MessageBroker__Host
+        value: amqp://messagebroker:5672
+      - name: MessageBroker__UserName
+        value: guest
+      - name: MessageBroker__Password
+        value: guest
+      - name: Redis__Host
+        value: redis
+      - name: Redis__Port
+        value: "6379"
+      - name: Redis__Password
+        value: redispass123
+      - name: Redis__IsSSL
+        value: "false"
+      - name: Redis__Prefix
+        value: "ecommerce:dev:"
+
+  - name: cartapi
+    project: Services/Ecommerce.Cart/Cart.API/Cart.API.csproj
+    bindings:
+      - port: 5027  
+    env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Development
+      - name: ASPNETCORE_URLS
+        value: http://0.0.0.0:5027
+      - name: ConnectionStrings__DefaultConnection
+        value: "Host=basketdb;Port=5432;Database=BasketDb;Username=postgres;Password=postgres;Pooling=true"
+      - name: Authentication__Issuer
+        value: http://authapi:8080
+      - name: Authentication__Jwks__Uri
+        value: http://authapi:8080/.well-known/openid-configuration/jwks
+      - name: Authentication__RequireHttpsMetadata
+        value: "false"
+      - name: GrpcSettings__ProductUrl
+        value: http://productapi:7001
+      - name: OrderApi__BaseAddress
+        value: http://orderapi:8080
+      - name: Redis__Host
+        value: redis
+      - name: Redis__Port
+        value: "6379"
+      - name: Redis__Password
+        value: redispass123
+      - name: Redis__IsSSL
+        value: "false"
+      - name: Redis__Prefix
+        value: "ecommerce:dev:"
+
+  - name: orderapi
+    project: Services/Ecommerce.Order/Order.API/Order.API.csproj
+    bindings:
+      - port: 5267
+    env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Development
+      - name: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+      - name: ConnectionStrings__DefaultConnection
+        value: "Host=orderdb;Port=5432;Database=OrderDb;Username=postgres;Password=postgres;Pooling=true"
+      - name: Authentication__Issuer
+        value: http://authapi:8080
+      - name: Authentication__Jwks__Uri
+        value: http://authapi:8080/.well-known/openid-configuration/jwks
+      - name: Authentication__RequireHttpsMetadata
+        value: "false"
+      - name: MessageBroker__Host
+        value: amqp://messagebroker:5672
+      - name: MessageBroker__UserName
+        value: guest
+      - name: MessageBroker__Password
+        value: guest
+
+  - name: emailapi
+    project: Services/Ecommerce.Email/Email.API/Email.API.csproj
+    bindings:
+      - port: 5139
+    env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Development
+
+
+      - name: ConnectionStrings__DefaultConnection
+        value: "Host=basketdb;Port=5432;Database=BasketDb;Username=postgres;Password=postgres;Pooling=true"
+      - name: MessageBroker__Host
+        value: amqp://messagebroker:5672
+      - name: MessageBroker__UserName
+        value: guest
+      - name: MessageBroker__Password
+        value: guest
+      - name: MessageBroker__RoutingKeys__UserCreated
+        value: user.created
+
+  - name: notificationapi
+    project: Services/Ecommerce.Notification/Notification.API/Notification.API.csproj
+    bindings:
+      - port: 5151
+    env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Development
+
+      - name: ConnectionStrings__DefaultConnection
+        value: "Host=basketdb;Port=5432;Database=BasketDb;Username=postgres;Password=postgres;Pooling=true"
+      - name: Authentication__Issuer
+        value: http://authapi:8080
+      - name: Authentication__Jwks__Uri
+        value: http://authapi:8080/.well-known/openid-configuration/jwks
+      - name: Authentication__RequireHttpsMetadata
+        value: "false"
+      - name: MessageBroker__Host
+        value: amqp://messagebroker:5672
+      - name: MessageBroker__UserName
+        value: guest
+      - name: MessageBroker__Password
+        value: guest
+
+  - name: apigateway
+    project: Gateways/APIGateway/APIGateway.csproj
+    bindings:
+      - port: 5255
+    env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Development
+      - name: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080

@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  product.api:
+    build:
+      context: "E:\\eCommerce\\Microservice.Ecommerce"
+      dockerfile: "Services/Ecommerce.Product/Product.API/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net9.0/Product.API.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "product.api:dev"
+    ports: []
+    volumes:
+    - "E:\\eCommerce\\Microservice.Ecommerce\\Services\\Ecommerce.Product\\Product.API:/app:rw"
+    - "E:\\eCommerce\\Microservice.Ecommerce:/src:rw"
+    - "C:\\Users\\DEV\\.nuget\\packages:/home/app/.nuget/packages"
+    working_dir: "/app"

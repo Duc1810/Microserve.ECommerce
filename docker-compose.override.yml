@@ -1,0 +1,295 @@
+﻿version: "3.8"
+
+services:
+  messagebroker:
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+
+
+  basketdb:
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${BASKET_DB:-BasketDb}
+    ports:
+       - "5433:5432"
+    volumes:
+      - postgres_basket:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${BASKET_DB:-BasketDb}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: always
+
+
+  orderdb:
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${ORDER_DB:-OrderDb}
+    ports:
+       - "5434:5432"
+    volumes:
+      - postgres_order:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${ORDER_DB:-OrderDb}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: always
+
+
+  authdb:
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${AUTH_DB:-AuthDb}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_auth:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${AUTH_DB:-AuthDb}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: always
+
+
+  redis:
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-redispass123}", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    environment:
+      REDIS_REPLICATION_MODE: master
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispass123}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: always
+
+
+  consul:
+    container_name: consul         
+    hostname: consul
+    ports:
+      - "8500:8500"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8500/v1/status/leader"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    restart: unless-stopped
+
+  elasticsearch:
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    restart: always
+
+  kibana:
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: always
+  
+
+  authAPI:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      SERVICE_HOST: authAPI
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=authdb;Port=5432;Database=${AUTH_DB:-AuthDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      AuthOptions__IssuerUri: http://authapi:8080
+      AuthOptions__TokenEndpoint: http://authapi:8080/connect/token
+      Authentication__RequireHttpsMetadata: "false"
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+      MessageBroker__RoutingKeys__UserCreated: user.created
+      Elastic__Enabled: "true"
+      Elastic__Uri: http://elasticsearch:9200
+      Elastic__IndexPrefix: ecommerce-auth
+      Elastic__Username:
+      Elastic__Password:
+    # ports:
+    #   - "5120:8080"
+    depends_on:
+      authdb:
+        condition: service_healthy
+      consul:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+    restart: always
+
+
+
+  productAPI:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      Authentication__Issuer: http://authapi:8080
+      Authentication__Jwks__Uri: http://authapi:8080/.well-known/openid-configuration/jwks
+      Authentication__RequireHttpsMetadata: "false"
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+      Redis__Host: redis
+      Redis__Port: "6379"
+      Redis__Password: ${REDIS_PASSWORD:-redispass123}
+      Redis__IsSSL: "false"
+      Redis__Prefix: "ecommerce:dev:"
+    # ports:
+    #   - "5246:7001"
+    #   - "5247:7003"
+    depends_on:
+      basketdb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+
+
+  cartAPI:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5027    
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      Authentication__Issuer: http://authapi:8080
+      Authentication__Jwks__Uri: http://authapi:8080/.well-known/openid-configuration/jwks
+      Authentication__RequireHttpsMetadata: "false"
+      GrpcSettings__ProductUrl: http://productAPI:7001
+      OrderApi__BaseAddress: http://orderAPI:8080
+      Redis__Host: redis
+      Redis__Port: "6379"
+      Redis__Password: ${REDIS_PASSWORD:-redispass123}
+      Redis__IsSSL: "false"
+      Redis__Prefix: "ecommerce:dev:"
+    # ports:
+    #   - "5087:5027"
+    depends_on:
+      basketdb:
+        condition: service_healthy
+      productAPI:
+        condition: service_started
+    restart: always
+
+
+
+  orderAPI:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development      
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=orderdb;Port=5432;Database=${ORDER_DB:-OrderDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      Authentication__Issuer: http://authapi:8080
+      Authentication__Jwks__Uri: http://authapi:8080/.well-known/openid-configuration/jwks
+      Authentication__RequireHttpsMetadata: "false"
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+    # ports:
+    #   - "5267:8080"
+    depends_on:
+      orderdb:
+        condition: service_healthy
+      messagebroker:
+        condition: service_started
+    restart: always
+
+
+
+  emailAPI:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+     # ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+      MessageBroker__RoutingKeys__UserCreated: user.created
+    # ports:
+    #   - "5139:8080"
+    depends_on:
+      basketdb:
+        condition: service_healthy
+      messagebroker:
+        condition: service_started
+    restart: always
+
+
+
+  notificationAPI:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+     # ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      Authentication__Issuer: http://authapi:8080
+      Authentication__Jwks__Uri: http://authapi:8080/.well-known/openid-configuration/jwks
+      Authentication__RequireHttpsMetadata: "false"
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+    # ports:
+    #   - "5151:8080"
+    depends_on:
+      basketdb:
+        condition: service_healthy
+      messagebroker:
+        condition: service_started
+    restart: always
+
+
+
+  apigateway:
+    build:
+      context: .
+      dockerfile: Gateways/APIGateway/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5255:8080"   
+    depends_on:
+      consul:          { condition: service_started }
+      authAPI:         { condition: service_started }
+      productAPI:      { condition: service_started }
+      cartAPI:         { condition: service_started }
+      orderAPI:        { condition: service_started }
+      notificationAPI: { condition: service_started }
+      emailAPI:        { condition: service_started }
+    restart: always
+

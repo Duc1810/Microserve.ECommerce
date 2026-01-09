@@ -1,0 +1,11 @@
+﻿global using Authentication.Domain.Entities;
+global using BuildingBlocks.CQRS;
+global using BuildingBlocks.Observability.Constants;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.Extensions.Logging;
+global using FluentValidation;
+global using Authentication.Application.Abstractions;
+global using BuildingBlocks.Observability.ApiResponse;
+global using BuildingBlocks.Results;
+global using System.Net;
+global using Authentication.Application.Commons;

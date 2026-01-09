@@ -1,0 +1,10 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AClientOptions_002Ecs_002Fl_003AC_0021_003FUsers_003FDEV_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E2_003Fresharper_002Dhost_003FSourcesCache_003F6782586e5689c42481526d8cd231c9df022b0529caac7af181e65a8d486b87e_003FClientOptions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/dotCover/Editor/HighlightingSourceSnapshotLocation/@EntryValue">C:\Users\DEV\AppData\Local\JetBrains\Rider2025.2\resharper-host\temp\Rider\vAny\CoverageData\_Microservice.Ecommerce.-1163628446\Snapshot\snapshot.utdcvr</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=7b9f79a6_002D595a_002D4a2e_002D91b8_002D90bf5fd99837/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from CreateCartItemHandlerTests.cs" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Or&gt;&#xD;
+    &lt;ProjectFile&gt;1E69721D-C3C3-4317-AA11-050A440E4C14/d:Cart.UnitTests/f:CreateCartItemHandlerTests.cs&lt;/ProjectFile&gt;&#xD;
+    &lt;ProjectFile&gt;1E69721D-C3C3-4317-AA11-050A440E4C14/d:Cart.UnitTests/f:RemoveCartItemHandlerTests.cs&lt;/ProjectFile&gt;&#xD;
+    &lt;ProjectFolder&gt;1E69721D-C3C3-4317-AA11-050A440E4C14/d:Authentication.UnitTests&lt;/ProjectFolder&gt;&#xD;
+  &lt;/Or&gt;&#xD;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

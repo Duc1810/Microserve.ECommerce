@@ -1,0 +1,11 @@
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\bin\Debug\net8.0\Notification.DAL.deps.json
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\bin\Debug\net8.0\Notification.DAL.dll
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\bin\Debug\net8.0\Notification.DAL.pdb
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\obj\Debug\net8.0\Notification.DAL.GeneratedMSBuildEditorConfig.editorconfig
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\obj\Debug\net8.0\Notification.DAL.AssemblyInfoInputs.cache
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\obj\Debug\net8.0\Notification.DAL.AssemblyInfo.cs
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\obj\Debug\net8.0\Notification.DAL.csproj.CoreCompileInputs.cache
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\obj\Debug\net8.0\Notification.DAL.dll
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\obj\Debug\net8.0\refint\Notification.DAL.dll
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\obj\Debug\net8.0\Notification.DAL.pdb
+E:\code\Microservice.Ecommerce\Services\Ecommerce.Notification\Notification.DAL\obj\Debug\net8.0\ref\Notification.DAL.dll

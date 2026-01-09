@@ -1,0 +1,47 @@
+﻿@page
+@model NotificationsIndexModel
+@{
+    ViewData["Title"] = "Notifications";
+    var unread = Model.Items.Count(x => !x.IsRead);
+}
+
+<h2>Notifications</h2>
+
+<form method="post" asp-page-handler="MarkAll" style="margin:8px 0;">
+    <button type="submit">Mark all as read</button>
+</form>
+
+<ul id="notif-list">
+    @foreach (var n in Model.Items.OrderByDescending(x => x.CreatedAt))
+    {
+        <li style="margin-bottom:8px;@(n.IsRead ? "" : "font-weight:bold;")">
+            <div>
+                <strong>@n.Title</strong> — @n.Message
+                <small>(@n.CreatedAt.ToLocalTime())</small>
+                @if (!string.IsNullOrWhiteSpace(n.Href))
+                {
+                    <a href="@n.Href" target="_blank">link</a>
+                }
+            </div>
+            @if (!n.IsRead)
+            {
+                <form method="post" asp-page-handler="MarkRead">
+                    <input type="hidden" name="id" value="@n.Id" />
+                    <button type="submit">Mark as read</button>
+                </form>
+            }
+        </li>
+    }
+</ul>
+
+@section Scripts {
+    <script>
+        // set badge theo số chưa đọc (client-side)
+        (function(){
+          var unread = @unread;
+          if (window.__notif && window.__notif.showBadge) {
+            window.__notif.showBadge(unread);
+          }
+        })();
+    </script>
+}

@@ -1,0 +1,154 @@
+{
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5255",
+    "HttpHandlerOptions": {
+      "DangerousAcceptAnyServerCertificateValidator": true
+    },
+    "ServiceDiscoveryProvider": {
+      "Host": "consul",
+      "Port": 8500,
+      "Type": "Consul",
+      "PollingInterval": 2000
+    }
+  },
+  "Routes": [
+    {
+      "SwaggerKey": "ecommerce-authentication",
+      "UpstreamPathTemplate": "/gateway/auth/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "authAPI",
+          "Port": 8080
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Auth/{everything}",
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 4,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 5000
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "10s",
+        "Limit": 2
+      }
+    },
+    {
+      "SwaggerKey": "ecommerce-product",
+      "UpstreamPathTemplate": "/gateway/product/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "productAPI",
+          "Port": 7003
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Product/{everything}",
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 4,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 5000
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "10s",
+        "Limit": 2
+      }
+    },
+    {
+      "SwaggerKey": "ecommerce-cart",
+      "UpstreamPathTemplate": "/gateway/cart/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "cartAPI",
+          "Port": 5027
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Cart/{everything}",
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 4,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 5000
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "10s",
+        "Limit": 2
+      }
+    },
+    {
+      "SwaggerKey": "ecommerce-order",
+      "UpstreamPathTemplate": "/gateway/order/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "orderAPI",
+          "Port": 8080
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Order/{everything}",
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 4,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 5000
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "10s",
+        "Limit": 2
+      }
+    },
+    {
+      "SwaggerKey": "ecommerce-email",
+      "UpstreamPathTemplate": "/gateway/email/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "emailAPI",
+          "Port": 8080
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Email/{everything}",
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 4,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 5000
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "10s",
+        "Limit": 2
+      }
+    },
+    {
+      "SwaggerKey": "ecommerce-notification",
+      "UpstreamPathTemplate": "/gateway/notification/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notificationAPI",
+          "Port": 8080
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Notification/{everything}",
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 4,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 5000
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "10s",
+        "Limit": 2
+      }
+    }
+  ]
+}

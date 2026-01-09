@@ -1,0 +1,34 @@
+[
+  {
+    "ContainingType": "Order.API.Controllers.OrderController",
+    "Method": "CreateOrder",
+    "RelativePath": "api/v1/Order",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Order.Application.Dtos.OrderDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Order.API.Controllers.OrderController",
+    "Method": "GetOrdersByCustomer",
+    "RelativePath": "api/v1/Order",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Order.Application.Dtos.GetOrdersSearchParams",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
