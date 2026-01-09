@@ -49,7 +49,6 @@ docker compose down
 | Payment                | 7005  |
 | Notification (SignalR) | 7006  |
 | RabbitMQ UI            | 15672 |
-| SQL Server             | 1433  |
 
 ---
 
