@@ -8,6 +8,9 @@ services:
   basketdb:
     image: postgres:15
 
+  ollama:
+    image: ollama/ollama:latest
+
   orderdb:
     image: postgres:15
 
@@ -75,3 +78,4 @@ volumes:
   postgres_auth:
   redis_data:
   es_data:
+  ollama_data:

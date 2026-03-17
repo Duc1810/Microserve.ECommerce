@@ -10,6 +10,14 @@ services:
       - "15672:15672"
     restart: always
 
+  ollama:
+      environment:
+        OLAMA_MODEL_PATH: /models/olama-model.bin
+      volumes:
+          - ./olama-model.bin:/models/olama-model.bin:ro
+      ports:
+          - "11434:11434"
+      restart: always
 
   basketdb:
     environment:
@@ -97,6 +105,11 @@ services:
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - "9200:9200"
+    healthcheck:
+        test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
     volumes:
       - es_data:/usr/share/elasticsearch/data
     restart: always
@@ -147,9 +160,13 @@ services:
 
 
   productAPI:
+    container_name: productAPI
+    hostname: productAPI
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      # ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_URLS: http://+:8080
+      SERVICE_HOST: productAPI
+      SERVICE_PORT: 8080
       ConnectionStrings__DefaultConnection: >
         Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
         Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
@@ -159,18 +176,27 @@ services:
       MessageBroker__Host: amqp://messagebroker:5672
       MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
       MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+      Elasticsearch__Uri: http://elasticsearch:9200
+      Ollama__BaseUrl: http://ollama:11434
+      Ollama__Model: nomic-embed-text
+      Ollama__TimeoutSeconds: "30"
+      Consul__Address: http://consul:8500
       Redis__Host: redis
       Redis__Port: "6379"
       Redis__Password: ${REDIS_PASSWORD:-redispass123}
       Redis__IsSSL: "false"
       Redis__Prefix: "ecommerce:dev:"
-    # ports:
-    #   - "5246:7001"
-    #   - "5247:7003"
+    ports:
+      - "5246:7001"
+      - "5247:8080"
     depends_on:
       basketdb:
         condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
       redis:
+        condition: service_healthy
+      consul:
         condition: service_healthy
     restart: always
 
@@ -275,6 +301,7 @@ services:
 
 
   apigateway:
+    container_name: apigateway
     build:
       context: .
       dockerfile: Gateways/APIGateway/Dockerfile

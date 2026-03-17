@@ -84,6 +84,9 @@ namespace Production.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_products");
 
+                    b.HasIndex("CreatedAt", "Id")
+                        .HasDatabaseName("IX_Product_Date_Id");
+
                     b.ToTable("Products", (string)null);
                 });
 #pragma warning restore 612, 618

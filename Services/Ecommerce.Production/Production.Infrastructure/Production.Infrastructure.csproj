@@ -7,13 +7,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="NewFolder\**" />
     <Compile Remove="Protos\**" />
+    <EmbeddedResource Remove="NewFolder\**" />
     <EmbeddedResource Remove="Protos\**" />
+    <None Remove="NewFolder\**" />
     <None Remove="Protos\**" />
   </ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="Bogus" Version="35.6.5" />
+		<PackageReference Include="EFCore.BulkExtensions" Version="8.1.2" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.14" />
+		<PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.15.6" />
+		<PackageReference Include="Hangfire.Core" Version="1.8.14" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.14" />
+		<PackageReference Include="Hangfire.PostgreSql" Version="1.20.9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.14">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

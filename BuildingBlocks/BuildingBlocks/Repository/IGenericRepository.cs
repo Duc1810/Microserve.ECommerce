@@ -13,6 +13,7 @@ namespace BuildingBlocks.Repository
         Task UpdateRangeAsync(IEnumerable<T> entities);
         Task DeleteAsyncById(object id);
         Task DeleteAsync(params object[] keyValues);
+        Task<T?> FindAsync(object id);
         Task RemoveRange(IEnumerable<T> entities);
         Task AddRangeAsync(IEnumerable<T> entities);
         Task<(List<T> Items, long TotalCount)> GetAllByPropertyWithCountAsync(int pageNumber = 1, int pageSize = 10, Expression<Func<T, bool>>? filter = null, string? includeProperties = null, Expression<Func<T, object>>? orderBy = null, bool ascending = true);

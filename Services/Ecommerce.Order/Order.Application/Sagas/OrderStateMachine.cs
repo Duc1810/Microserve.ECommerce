@@ -1,0 +1,111 @@
+﻿using BuildingBlocks.Commands;
+using Microsoft.AspNetCore.Http.Features;
+using StackExchange.Redis;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using OrderItemDto = BuildingBlocks.Commands.OrderItemDto;
+
+namespace Order.Application.Sagas;
+public class OrderStateMachine : MassTransitStateMachine<OrderState>
+{
+    public OrderStateMachine()
+    {
+        InstanceState(x => x.CurrentState);
+
+        Event(() => OrderSubmitted, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => StockReserved, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => StockReservationFailed, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => PaymentCompleted, x => x.CorrelateById(m => m.Message.OrderId));
+        Event(() => PaymentFailed, x => x.CorrelateById(m => m.Message.OrderId));
+
+        Initially(
+            When(OrderSubmitted)
+                .Then(context =>
+                {
+                    context.Saga.UserId = context.Message.UserId;
+                    context.Saga.TotalAmount = context.Message.TotalAmount;
+                    context.Saga.CreatedAt = DateTime.UtcNow;
+                    context.Saga.UpdatedAt = DateTime.UtcNow;
+
+                    context.Saga.ItemsJson = System.Text.Json.JsonSerializer.Serialize(context.Message.Items);
+                })
+                .TransitionTo(Submitted)
+                .Publish(context => new ReserveStockCommand
+                {
+                    OrderId = context.Saga.CorrelationId,
+                    Items = context.Message.Items
+                })
+        );
+
+        During(Submitted,
+            When(StockReserved)
+                .TransitionTo(StockReservedState)
+                .Publish(context => new ProcessPaymentCommand
+                {
+                    OrderId = context.Saga.CorrelationId,
+                    UserId = context.Saga.UserId,
+                    Amount = context.Saga.TotalAmount,
+                    PaymentMethodId = "pm_card_visa"
+                }),
+            When(StockReservationFailed)
+                .Then(context => context.Saga.FailureReason = context.Message.Reason)
+                .TransitionTo(Failed)
+                .Publish(context => new CancelOrderCommand
+                {
+                    OrderId = context.Saga.CorrelationId,
+                    Reason = context.Message.Reason
+                })
+        );
+
+        During(StockReservedState,
+            When(PaymentCompleted)
+                .Then(context => context.Saga.UpdatedAt = DateTime.UtcNow)
+                .TransitionTo(Completed)
+                .Publish(context => new CompleteOrderCommand { OrderId = context.Saga.CorrelationId }),
+            When(PaymentFailed)
+                .Then(context =>
+                {
+                    context.Saga.FailureReason = context.Message.Reason;
+                    context.Saga.UpdatedAt = DateTime.UtcNow;
+                })
+                .TransitionTo(Failed)
+                // compensating transaction: release reserved stock
+                .PublishAsync(context =>
+                {
+                    var items = string.IsNullOrEmpty(context.Saga.ItemsJson)
+                            ? new List<OrderItemDto>()
+                            : JsonSerializer.Deserialize<List<OrderItemDto>>(context.Saga.ItemsJson) ?? new List<OrderItemDto>(); ;
+
+                    return context.Init<IReleaseStockCommand>(new
+                    {
+                        OrderId = context.Saga.CorrelationId,
+                        Items = items,
+                    });
+                })
+                .Publish(context => new CancelOrderCommand
+                {
+                    OrderId = context.Saga.CorrelationId,
+                    Reason = context.Message.Reason,
+                })
+        );
+
+    }
+
+
+    public State Submitted { get; private set; } = null!;
+    public State StockReservedState { get; private set; } = null!;
+    public State Completed { get; private set; } = null!;
+    public State Failed { get; private set; } = null!;
+    public Event<IOrderSubmittedEvent> OrderSubmitted { get; private set; } = null!;
+    public Event<IStockReservedEvent> StockReserved { get; private set; } = null!;
+    public Event<IStockReservationFailedEvent> StockReservationFailed { get; private set; } = null!;
+    public Event<IPaymentCompletedEvent> PaymentCompleted { get; private set; } = null!;
+    public Event<IPaymentFailedEvent> PaymentFailed { get; private set; } = null!;
+
+
+}
+

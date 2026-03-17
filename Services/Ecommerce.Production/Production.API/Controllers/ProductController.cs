@@ -11,9 +11,9 @@ using Production.Application.Features.Queries.GetProductById;
 namespace Production.API.Controllers
 {
     [ApiController]
-    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1.0")]
-
+    [Route("api/v{version:apiVersion}/[controller]")]
+    
     public class ProductController : ControllerBase
     {
         private readonly ISender _sender;
@@ -29,6 +29,7 @@ namespace Production.API.Controllers
             var result = await _sender.Send(new GetProductsQuery(query));
             return result.ToActionResult();
         }
+
 
         [HttpGet("{id}")]
 

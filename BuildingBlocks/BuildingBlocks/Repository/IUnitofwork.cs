@@ -1,5 +1,7 @@
 ﻿
 
+using System.Data;
+
 namespace BuildingBlocks.Repository
 {
     public interface IUnitOfWork
@@ -7,6 +9,11 @@ namespace BuildingBlocks.Repository
         IGenericRepository<T> GetRepository<T>() where T : class;
 
         Task SaveAsync();
+        Task BeginTransactionAsync();
+        Task CommitTransactionAsync();
+        Task RollbackTransactionAsync();
+        IDbConnection GetDbConnection();
+        IDbConnection? GetCurrentdTransaction();
 
     }
 }

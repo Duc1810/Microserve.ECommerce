@@ -1,7 +1,4 @@
-﻿
-
-
-namespace BuildingBlocks.Messaging.Options
+﻿namespace BuildingBlocks.Messaging.Options
 {
     public class MessageBrokerOptions
     {
@@ -10,7 +7,6 @@ namespace BuildingBlocks.Messaging.Options
         public string Password { get; set; } = default!;
         public RoutingKeysOptions RoutingKeys { get; set; } = new();
     }
-
 
     public class RoutingKeysOptions
     {

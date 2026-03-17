@@ -18,7 +18,7 @@ namespace Production.API.Services
         public override async Task<GetProductResponse> GetProduct(GetProductRequest request, ServerCallContext context)
         {
             var query = new GetProductByIdQuery(Guid.Parse(request.Id));
-            
+
             var result = await _mediator.Send(query);
             var product = result.Value?.Product;
 
@@ -35,7 +35,6 @@ namespace Production.API.Services
                 ImageFile = product.ImageFile,
                 Price = (double)product.Price,
                 Quantity = product.Quantity,
-                
             };
 
             response.Category.AddRange(product.Category);

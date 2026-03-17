@@ -34,16 +34,6 @@ public class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, Result<
                 return Result<LoginUserResult>.ResponseError(CodeStatus.UserNotFound,ErrorMessages.UserNotFound,HttpStatusCode.NotFound);
             }
 
-
-            var passwordCheck = await _signInManager.CheckPasswordSignInAsync(user, payload.Password, false);
-
-            // Invalid credentials
-            if (!passwordCheck.Succeeded)
-            {
-                _logger.LogWarning($"[{nameof(Handle)}] invalid_credentials with userId : {user.Id} ");
-                return Result<LoginUserResult>.ResponseError(CodeStatus.InvalidCredentials, ErrorMessages.InvalidCredentials, HttpStatusCode.BadRequest);
-            }
-
             // Request token from IdentityServer
             var tokenResponse = await _tokenService.RequestPasswordTokenAsync(payload.UserName, payload.Password, cancellationToken);
 

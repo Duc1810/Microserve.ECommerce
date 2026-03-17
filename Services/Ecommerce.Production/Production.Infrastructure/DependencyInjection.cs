@@ -3,13 +3,19 @@ using BuildingBlocks.Caching.Services;
 using BuildingBlocks.EFCore;
 using BuildingBlocks.Messaging.MassTransit;
 using BuildingBlocks.Repository;
+using Elastic.Clients.Elasticsearch;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using product.Infrastructure.Data;
-using Production.Application.Abstractions;
+using Production.Application.Commons.Interfaces;
+using Production.Application.Commons.Options;
 using Production.Application.Features.Consumers.OrderCosumer;
+using Production.Infrastructure.Data;
 using Production.Infrastructure.Data.Configurations;
+using Production.Infrastructure.Services;
 
 
 namespace Production.Infrastructure
@@ -28,11 +34,37 @@ namespace Production.Infrastructure
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddRedisConfiguration(configuration);
             services.AddSingleton<IVersionStore, RedisVersionStore>();
+            services.AddScoped<Production.Application.Commons.Interfaces.ICacheService, RedisCacheService>();
+            services.AddScoped<IElasticsearchService, ElasticsearchService>();
+
+            var elasticsearchUrl = configuration.GetConnectionString("Elasticsearch")
+            ?? "http://localhost:9200";
+            services.AddSingleton(sp =>
+            {
+                var settings = new ElasticsearchClientSettings(new Uri(elasticsearchUrl))
+                    .DefaultIndex("products");
+                return new ElasticsearchClient(settings);
+            });
 
             services.AddMessageBroker(
                 configuration,
-                typeof(OrderCreatedConsumer).Assembly
+                typeof(ReserveStockConsumer).Assembly
             );
+            // register ollama service with http client factory
+            services.Configure<OllamaOptions>(configuration.GetSection("Ollama"));
+            services.AddHttpClient<IOllamaService, OllamaService>()
+            .ConfigureHttpClient((sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
+
+                client.BaseAddress = new Uri(options.BaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            });
+
+            //data seeder
+            services.AddScoped<ProductSeeder>();
+           
+
             return services;
         }
 

@@ -123,6 +123,9 @@ namespace BuildingBlocks.Repository
             await _dbSet.AddRangeAsync(entities);
         }
 
-
+        public async Task<T> FindAsync(object id)
+        {
+            return await _dbSet.FindAsync(id);
+        }
     }
 }

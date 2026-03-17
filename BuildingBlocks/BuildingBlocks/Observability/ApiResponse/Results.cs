@@ -26,9 +26,11 @@ public readonly struct Result<T>
     }
 
     public static Result<T> ResponseSuccess(T value, string message = "Successful") => new(value, message);
-    public static Result<T> ResponseError(string code, string message, HttpStatusCode status, object? details = null)
-        => new(new Error(code, message, status, details));
-
+    public static Result<T> ResponseError(string? code, string message, HttpStatusCode status, object? details = null)
+        => new(new Error(code!, message, status, details));
+    public static Result<T> Failure(string code, string message, HttpStatusCode status)
+        => new(new Error(code, message, status));
+    public static Result<T> Failure(Error error) => new(error);
 }
 
 public readonly record struct Error(

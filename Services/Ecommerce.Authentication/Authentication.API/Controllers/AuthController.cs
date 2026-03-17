@@ -84,25 +84,25 @@ namespace Authentication.API.Controllers
 
         [HttpPost("reset-password")]
         [AllowAnonymous]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand request, CancellationToken ct)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand request, CancellationToken cancellation)
         {
-            var result = await _sender.Send(request, ct);
+            var result = await _sender.Send(request, cancellation);
             return result.ToActionResult();
         }
 
         [HttpPost("confirm-email")]
         [AllowAnonymous]
-        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand request, CancellationToken ct)
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand request, CancellationToken cancellation)
         {
-            var result = await _sender.Send(request, ct);
+            var result = await _sender.Send(request, cancellation);
             return result.ToActionResult();
         }
         //[Authorize(Policy = "ApiScope")]
         [HttpPost("logout")]
 
-        public async Task<IActionResult> Logout([FromBody] string refeshToken, CancellationToken ct)
+        public async Task<IActionResult> Logout([FromBody] string refeshToken, CancellationToken cancellation)
         {
-            await _logoutService.LogoutAsync(refeshToken, ct);
+            await _logoutService.LogoutAsync(refeshToken, cancellation);
             return Ok("Logout successful");
         }
 

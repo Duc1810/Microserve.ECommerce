@@ -14,7 +14,7 @@ namespace Order.Application
             (this IServiceCollection services, IConfiguration configuration)
         {
 
-            services.AddScoped<IMapper>(sp =>
+            services.AddScoped(sp =>
             {
                 var config = new MapperConfiguration(cfg =>
                 {
@@ -32,7 +32,6 @@ namespace Order.Application
                 config.AddOpenBehavior(typeof(ValidationBehavior<,>));
                 config.AddOpenBehavior(typeof(LoggingBehavior<,>));
             });
-            services.AddMessageBroker(configuration, Assembly.GetExecutingAssembly());
 
             return services;
         }

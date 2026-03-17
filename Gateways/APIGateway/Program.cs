@@ -6,56 +6,58 @@ using Ocelot.Provider.Polly;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Configuration
+    .SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("Routers/ocelot.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"Routers/ocelot.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+    .AddJsonFile($"Routers/ocelot.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
 
 builder.Services
     .AddOcelot(builder.Configuration)
-    .AddConsul()
+    .AddConsul() 
     .AddPolly();
 
-builder.Services.AddHttpClient(); 
+builder.Services.AddHttpClient();
+
 
 builder.Services.AddSingleton<IConsulClient>(_ =>
-    new Consul.ConsulClient(c =>
-        c.Address = new Uri("http://consul:8500")));
+    new ConsulClient(c => c.Address = new Uri("http://consul:8500")));
 
 var app = builder.Build();
 
 
-app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/api/healths"),
-    branch =>
+
+app.UseRouting();
+
+app.MapGet("/api/healths/{service}", async (string service, IConsulClient consul, IHttpClientFactory http) =>
+{
+    var healthResponse = await consul.Health.Service(service, tag: null, passingOnly: true);
+    var instance = healthResponse.Response.FirstOrDefault();
+
+    var addrress = $"{instance.Service.Address}:{instance.Service.Port}";
+    var target = $"http://{addrress}/health";
+
+    try
     {
-        branch.UseRouting();
-        branch.UseEndpoints(endpoints =>
+        var client = http.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(5);
+        var resp = await client.GetAsync(target);
+        var body = await resp.Content.ReadAsStringAsync();
+
+        return Results.Json(new
         {
-            endpoints.MapGet("/api/healths/{service}", async (string service, IConsulClient consul, IHttpClientFactory http) =>
-            {
-                var res = await consul.Health.Service(service, tag: null, passingOnly: true);
-                var inst = res.Response.FirstOrDefault();
-                if (inst is null)
-                    return Results.NotFound(new { error = $"No healthy instance for '{service}'" });
-
-                var addr = $"{inst.Service.Address}:{inst.Service.Port}";
-                var target = new Uri($"http://{addr}/health");
-
-                var client = http.CreateClient();
-                using var resp = await client.GetAsync(target);
-                var body = await resp.Content.ReadAsStringAsync();
-
-                return Results.Json(new
-                {
-                    service,
-                    address = addr,
-                    statusCode = (int)resp.StatusCode,
-                    output = body
-                }, statusCode: (int)resp.StatusCode);
-            });
+            status = "Success",
+            serviceName = service,
+            resolvedAddress = addrress,
+            downstreamHealthStatus = resp.StatusCode.ToString(),
+            detail = body
         });
-    });
-
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { error = $"Lỗi kết nối tới Downstream: {ex.Message}", resolvedAddress = addrress });
+    }
+});
 
 await app.UseOcelot();
 

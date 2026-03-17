@@ -7,8 +7,10 @@
     "ServiceDiscoveryProvider": {
       "Host": "consul",
       "Port": 8500,
-      "Type": "Consul",
-      "PollingInterval": 2000
+      "Type": "PollConsul",
+      "PollingInterval": 2000,
+      "Scheme": "http"
+
     }
   },
   "Routes": [
@@ -40,23 +42,13 @@
       "UpstreamPathTemplate": "/gateway/product/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
       "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "productAPI",
-          "Port": 7003
-        }
-      ],
       "DownstreamPathTemplate": "/api/v1/Product/{everything}",
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 4,
-        "DurationOfBreak": 10,
-        "TimeoutValue": 5000
+      "ServiceName": "productservice",
+      "UseServiceDiscovery": true,
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
       },
-      "RateLimitOptions": {
-        "EnableRateLimiting": true,
-        "Period": "10s",
-        "Limit": 2
-      }
+      "DownstreamHostAndPorts": []
     },
     {
       "SwaggerKey": "ecommerce-cart",

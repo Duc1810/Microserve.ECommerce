@@ -2,6 +2,8 @@
 using System.Reflection;
 using Order.Domain.Models;
 using Order.Application.Abstractions;
+using MassTransit;
+using Order.Application.Sagas;
 namespace Order.Infrastructure.Data
 {
     public class ApplicationDbContext : DbContext, IApplicationDbContext
@@ -15,8 +17,15 @@ namespace Order.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             base.OnModelCreating(builder);
+            builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            builder.AddInboxStateEntity();
+            builder.AddOutboxMessageEntity();
+            builder.AddOutboxStateEntity();
+
+            //saga state
+            builder.Entity<OrderState>().HasKey(x => x.CorrelationId);
         }
     }
 }

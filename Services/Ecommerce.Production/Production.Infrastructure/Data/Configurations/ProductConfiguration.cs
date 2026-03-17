@@ -12,7 +12,7 @@ namespace Production.Infrastructure.Data.Configurations
 
 
             builder.HasKey(p => p.Id);
-
+                
 
             builder.Property(p => p.Name)
                 .IsRequired()
@@ -28,7 +28,7 @@ namespace Production.Infrastructure.Data.Configurations
                 .HasColumnType("decimal(18,2)");
 
             builder.Property(p => p.Quantity)
-                .HasColumnType("int");
+                .HasColumnType("integer");
 
 
 

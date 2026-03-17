@@ -4,6 +4,7 @@ using BuildingBlocks.Observability.Authentication;
 using BuildingBlocks.Observability.Exceptions.Handler;
 using BuildingBlocks.Observability.Swagger;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Order.API.Helpers;
 using Order.Application;
 using Order.Infrastructure;
 using Order.Infrastructure.Data;
@@ -22,6 +23,26 @@ builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddJwtAuthWithManualJwks(builder.Configuration);
 builder.Services.AddCurrentUser();
+
+
+builder.Services.AddHttpContextAccessor();
+
+// Register the handler as a transient service
+builder.Services.AddTransient<AuthenticationHeaderHandler>();
+
+// Configure the Named HttpClient
+builder.Services.AddHttpClient("CartServiceUrl", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["CartServiceUrl"]!);
+})
+.AddHttpMessageHandler<AuthenticationHeaderHandler>()
+.AddStandardResilienceHandler();
+
+builder.Services.AddHttpClient("PaymentClient", client => client.BaseAddress = new Uri(builder.Configuration["PaymentServiceUrl"]!))
+    .AddStandardResilienceHandler();
+
+builder.Services.AddHttpClient("ProductClient", client => client.BaseAddress = new Uri(builder.Configuration["ProductCatalogServiceUrl"]!))
+    .AddStandardResilienceHandler();
 
 SerilogConfig.Configure(builder, "OrderService");
 builder.Services.AddEndpointsApiExplorer();

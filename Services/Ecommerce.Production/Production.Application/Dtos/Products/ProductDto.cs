@@ -10,4 +10,17 @@ public record ProductDto
     public List<string> Category { get; set; } = new();
 }
 
+public record ProductSearchItemDto
+{
+    public ProductDto Product { get; set; } = default!;
+    public double Score { get; set; }
+    public double MatchPercent { get; set; }
+}
+public class ProductPopularDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+    public int Quantity { get; set; }
+    public List<string> Category { get; set; } = new();
+}
 

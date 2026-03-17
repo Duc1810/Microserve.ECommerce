@@ -9,7 +9,8 @@ namespace BuildingBlocks.Messaging.MassTransit
 {
     public static class Extension
     {
-        public static IServiceCollection AddMessageBroker(this IServiceCollection services, IConfiguration configuration, Assembly? assembly = null, Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator>? configureBus = null)
+        public static IServiceCollection AddMessageBroker(this IServiceCollection services, IConfiguration configuration, Assembly? assembly = null, Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator>? configureBus = null
+           ,Action<IBusRegistrationConfigurator>? configureExtra = null )
         {
             services.AddMassTransit(config =>
             {
@@ -18,13 +19,14 @@ namespace BuildingBlocks.Messaging.MassTransit
                 if (assembly != null)
                     config.AddConsumers(assembly);
 
+                configureExtra?.Invoke(config);
 
                 config.UsingRabbitMq((context, configurator) =>
                 {
                     configurator.Host(new Uri(configuration["MessageBroker:Host"]!), host =>
                     {
-                        host.Username(configuration["MessageBroker:UserName"]);
-                        host.Password(configuration["MessageBroker:Password"]);
+                        host.Username(configuration["MessageBroker:UserName"]!);
+                        host.Password(configuration["MessageBroker:Password"]!);
                     });
                     configurator.Message<UserCreatedEvent>(x => x.SetEntityName("user-created"));
                     configurator.Publish<UserCreatedEvent>(x =>
@@ -33,9 +35,14 @@ namespace BuildingBlocks.Messaging.MassTransit
                     });
 
                     if (configureBus is null)
+                    {
                         configurator.ConfigureEndpoints(context);
+                    }
                     else
+                    {
                         configureBus(context, configurator);
+                    }
+
                 });
             });
             return services;
@@ -46,9 +53,5 @@ namespace BuildingBlocks.Messaging.MassTransit
             services.AddSingleton<IEventBus, EventBus>();
             return services;
         }
-
-
-
-
     }
 }

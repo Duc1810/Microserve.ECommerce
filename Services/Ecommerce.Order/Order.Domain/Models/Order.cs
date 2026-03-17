@@ -39,6 +39,11 @@ namespace Order.Domain.Models
             return order;
         }
 
+        public void UpdateStatus(OrderStatus status)
+        {
+            Status = status;
+        }
+
         public void Update(string orderName, Address shippingAddress, Address billingAddress,  OrderStatus status)
         {
             OrderName = orderName;
