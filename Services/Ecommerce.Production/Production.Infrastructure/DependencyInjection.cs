@@ -1,4 +1,7 @@
-﻿using BuildingBlocks.Caching.Configuaration;
+﻿using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
+using BuildingBlocks.Caching.Configuaration;
 using BuildingBlocks.Caching.Services;
 using BuildingBlocks.EFCore;
 using BuildingBlocks.Messaging.MassTransit;
@@ -61,9 +64,24 @@ namespace Production.Infrastructure
                 client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
             });
 
+            //register s3 service
+            services.Configure<S3Options>(configuration.GetSection("AWS"));
+            services.AddSingleton<IAmazonS3>(sp =>
+            {
+                var options = sp.GetRequiredService<IOptions<S3Options>>().Value;
+                var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
+                var region = RegionEndpoint.GetBySystemName(options.Region);
+
+                return new AmazonS3Client(credentials, region);
+            });
+
+            services.AddScoped<IS3StorageService, S3StorageService>();
+            services.AddScoped<IS3MultipartUploadService, S3StorageService>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+
             //data seeder
             services.AddScoped<ProductSeeder>();
-           
+
 
             return services;
         }

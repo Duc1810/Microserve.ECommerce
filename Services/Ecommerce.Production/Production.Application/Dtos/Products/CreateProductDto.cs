@@ -6,6 +6,7 @@ public record CreateProductDto(
     List<string> Category,
     string Description,
     string ImageFile,
-    decimal Price
+    decimal Price,
+    string VideoFile
 );
 

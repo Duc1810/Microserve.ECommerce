@@ -15,6 +15,7 @@
     <None Remove="Protos\**" />
   </ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="AWSSDK.S3" Version="4.0.19.1" />
 		<PackageReference Include="Bogus" Version="35.6.5" />
 		<PackageReference Include="EFCore.BulkExtensions" Version="8.1.2" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />

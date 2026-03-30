@@ -125,3 +125,9 @@ bld/
 *.cache
 *.swp
 *~
+
+# ===========================
+# App Settings (Sensitive)
+# ===========================
+appsettings.Development.json
+appsettings.Local.json

@@ -4,6 +4,8 @@ using BuildingBlocks.Observability.Authentication;
 using BuildingBlocks.Observability.Exceptions.Handler;
 using BuildingBlocks.Observability.Swagger;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Order.API.Helpers;
 using Order.Application;
 using Order.Infrastructure;
@@ -24,6 +26,27 @@ builder.Services.AddProblemDetails();
 builder.Services.AddJwtAuthWithManualJwks(builder.Configuration);
 builder.Services.AddCurrentUser();
 
+const string serviceName = "OrderService";
+
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+});
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName))
+    .WithTracing(tracing =>
+    {
+        tracing
+           .AddAspNetCoreInstrumentation()
+           .AddHttpClientInstrumentation()
+           .AddEntityFrameworkCoreInstrumentation()
+           .AddOtlpExporter(options =>
+           {
+               options.Endpoint = new Uri("http://jaeger:4317");
+           });
+    });
 
 builder.Services.AddHttpContextAccessor();
 

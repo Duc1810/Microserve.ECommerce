@@ -1,9 +1,5 @@
 ﻿using MediatR;
 using Production.Application.Commons.Interfaces;
-using Production.Application.Dtos.Products;
-using Production.Application.Features.Queries.GetProduct;
-using Production.Application.Features.Queries.GetProductById;
-using Production.Domain.Entities;
 
 namespace Production.Application.Features.Queries.GetSearchProduct;
 public class SearchProductsQueryHandler : IQueryHandler<SearchProductsQuery, Result<SearchResponseDto>>

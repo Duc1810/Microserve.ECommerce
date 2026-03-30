@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.override.yml = docker-compose.override.yml
 		docker-compose.yml = docker-compose.yml
+		grafana_dashboard.json = grafana_dashboard.json
+		prometheus.yml = prometheus.yml
 		tye.yaml = tye.yaml
 	EndProjectSection
 EndProject

@@ -24,6 +24,9 @@ namespace Production.Infrastructure.Data.Configurations
             builder.Property(p => p.ImageFile)
                 .HasMaxLength(500);
 
+            //builder.Property(p => p.VideoFile)
+            //   .HasMaxLength(500);
+
             builder.Property(p => p.Price)
                 .HasColumnType("decimal(18,2)");
 

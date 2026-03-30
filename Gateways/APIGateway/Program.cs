@@ -3,14 +3,26 @@ using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Ocelot.Provider.Consul;
 using Ocelot.Provider.Polly;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog((context, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Configuration
     .SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("Routers/ocelot.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"Routers/ocelot.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation() // Monitor inbound HTTP requests
+               .AddPrometheusExporter(); // Enable the /metrics endpoint
+    });
 
 builder.Services
     .AddOcelot(builder.Configuration)
@@ -58,7 +70,7 @@ app.MapGet("/api/healths/{service}", async (string service, IConsulClient consul
         return Results.BadRequest(new { error = $"Lỗi kết nối tới Downstream: {ex.Message}", resolvedAddress = addrress });
     }
 });
-
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 await app.UseOcelot();
 
 app.Run();

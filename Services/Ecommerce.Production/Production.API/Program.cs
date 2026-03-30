@@ -5,6 +5,8 @@ using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Production.API;
 using Production.API.Middleware;
 using Production.Application;
@@ -39,6 +41,41 @@ builder.WebHost.ConfigureKestrel(options =>
     });
 }).UseKestrel();
 
+//Cors policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+
+// --- OBSERVABILITY (OpenTelemetry) ---
+const string serviceName = "ProductCatalogService";
+
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+});
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName))
+    .WithTracing(tracing =>
+    {
+        tracing
+           .AddAspNetCoreInstrumentation()
+           .AddHttpClientInstrumentation()
+           .AddEntityFrameworkCoreInstrumentation()
+           .AddOtlpExporter(options =>
+           {
+               options.Endpoint = new Uri("http://jaeger:4317");
+           });
+    });
 
 // --- HEALTH CHECKS ---
 builder.Services.AddHealthChecks()
@@ -155,9 +192,17 @@ var registration = new AgentServiceRegistration
     }
 };
 
-lifetime.ApplicationStarted.Register(() =>
+lifetime.ApplicationStarted.Register(async () =>
 {
-    consulClient.Agent.ServiceRegister(registration).Wait();
+    try
+    {
+        await consulClient.Agent.ServiceRegister(registration);
+        Console.WriteLine("Register to Consul successfully!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Consul Error: {ex.Message}");
+    }
 });
 
 lifetime.ApplicationStopped.Register(() =>
@@ -196,7 +241,7 @@ if (app.Environment.IsDevelopment())
         options.DisplayRequestDuration();
     });
 }
-
+app.UseCors("AllowFrontend");
 app.MapControllers();
 app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {

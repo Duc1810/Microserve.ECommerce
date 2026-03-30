@@ -54,9 +54,17 @@ using BuildingBlocks.Logging;
 using BuildingBlocks.Observability.Swagger;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// Configure Serilog to read configuration from appsettings.json
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json")
+        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
+        .Build())
+    .Enrich.FromLogContext()
+    .CreateLogger();
 // Services
 builder.Services
     .AddApiServices(builder.Configuration, builder.Environment)

@@ -21,7 +21,7 @@ public static class HangfireJobScheduler
         RecurringJob.AddOrUpdate<ProductCatologjobs>(
             "daily-analytics-afternoon",
             job => job.GenerateDailyAnalyticsAsync(),
-            Cron.Daily(14, 0), // 14:00 là 2 giờ chiều
+            Cron.Daily(14, 0), 
             new RecurringJobOptions
             {
                 TimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")

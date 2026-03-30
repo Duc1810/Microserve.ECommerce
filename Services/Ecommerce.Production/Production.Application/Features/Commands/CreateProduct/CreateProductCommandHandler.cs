@@ -24,7 +24,8 @@ public class CreateProductCommandHandler : ICommandHandler<CreateProductCommand,
                 Category = command.Product.Category,
                 Description = command.Product.Description,
                 ImageFile = command.Product.ImageFile,
-                Price = command.Product.Price
+                Price = command.Product.Price,
+               // VideoFile = command.Product.VideoFile,
             };
 
             await _unitOfRepository.GetRepository<ProductEntity>().AddAsync(product);
