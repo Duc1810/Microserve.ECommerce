@@ -5,5 +5,7 @@ public interface IProductRepository
         DateTime? createdAt,
         Guid? lastId,
         int limit);
-}
 
+    Task<IEnumerable<(string Category, int Count, decimal AvgPrice, decimal MinPrice, decimal MaxPrice)>> GetCategoriesStatsAsync(
+        CancellationToken cancellationToken = default);
+}
