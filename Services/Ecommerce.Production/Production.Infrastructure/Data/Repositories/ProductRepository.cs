@@ -30,4 +30,26 @@ public class ProductRepository : IProductRepository
             .Take(limit)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<(string Category, int Count, decimal AvgPrice, decimal MinPrice, decimal MaxPrice)>> GetCategoriesStatsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var stats = await _context.Products
+            .AsNoTracking()
+            .Where(product => !product.IsDeleted)
+            .SelectMany(product => product.Category.Select(category => new { Category = category, product.Price }))
+            .Where(x => !string.IsNullOrWhiteSpace(x.Category))
+            .GroupBy(x => x.Category.Trim())
+            .Select(group => new
+            {
+                Category = group.Key,
+                Count = group.Count(),
+                AvgPrice = decimal.Round(group.Average(x => x.Price), 2),
+                MinPrice = group.Min(x => x.Price),
+                MaxPrice = group.Max(x => x.Price)
+            })
+            .ToListAsync(cancellationToken);
+
+        return stats.Select(s => (s.Category, s.Count, s.AvgPrice, s.MinPrice, s.MaxPrice));
+    }
 }
