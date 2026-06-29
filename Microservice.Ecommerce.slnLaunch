@@ -17,6 +17,10 @@
       {
         "Path": "Services\\Ecommerce.Order\\Order.API\\Order.API.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "Gateways\\APIGateway\\APIGateway.csproj",
+        "Action": "Start"
       }
     ]
   }

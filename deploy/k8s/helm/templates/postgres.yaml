@@ -1,0 +1,131 @@
+{{- if .Values.infra.postgres.enabled }}
+
+# =========================
+# Basket DB
+# =========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: basketdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: basketdb
+  template:
+    metadata:
+      labels:
+        app: basketdb
+    spec:
+      containers:
+        - name: basketdb
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "{{ $.Values.global.pgUser }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ $.Values.global.pgPassword }}"
+            - name: POSTGRES_DB
+              value: "{{ $.Values.infra.postgres.basketDb }}"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: basketdb
+spec:
+  selector:
+    app: basketdb
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+# =========================
+# Order DB
+# =========================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orderdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orderdb
+  template:
+    metadata:
+      labels:
+        app: orderdb
+    spec:
+      containers:
+        - name: orderdb
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "{{ $.Values.global.pgUser }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ $.Values.global.pgPassword }}"
+            - name: POSTGRES_DB
+              value: "{{ $.Values.infra.postgres.orderDb }}"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orderdb
+spec:
+  selector:
+    app: orderdb
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+# =========================
+# Auth DB
+# =========================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: authdb
+  template:
+    metadata:
+      labels:
+        app: authdb
+    spec:
+      containers:
+        - name: authdb
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "{{ $.Values.global.pgUser }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ $.Values.global.pgPassword }}"
+            - name: POSTGRES_DB
+              value: "{{ $.Values.infra.postgres.authDb }}"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authdb
+spec:
+  selector:
+    app: authdb
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+{{- end }}

@@ -3,7 +3,6 @@ using Consul;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -13,11 +12,6 @@ using Production.Application;
 using Production.Application.Commons.Options;
 using Production.Infrastructure;
 using Production.Infrastructure.Data;
-using System;
-using System.Net;
-using System.Net.Sockets;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services
@@ -37,7 +31,7 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenAnyIP(7003, o =>
     {
         o.Protocols = HttpProtocols.Http1AndHttp2;
-        o.UseHttps();
+        //o.UseHttps();
     });
 }).UseKestrel();
 

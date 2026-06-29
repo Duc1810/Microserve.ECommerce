@@ -16,22 +16,22 @@ public class PayOSService : IPayOSService
 {
     private readonly PayOSClient _client;
     private readonly ILogger<PayOSService> _logger;
-    private readonly UnitOfWork _unitOfWork;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ITransactionService _transactionService;
 
-    public PayOSService(IOptions<PayOSConfig> payOSConfig, ILogger<PayOSService> logger, UnitOfWork unitOfWork, IPublishEndpoint publishEndpoint)
+    public PayOSService(
+        IOptions<PayOSConfig> payOSConfig, 
+        ILogger<PayOSService> logger, 
+        ITransactionService transactionService)
     {
         var config = payOSConfig.Value;
         _logger = logger;
         _client = new PayOSClient(config.ClientId, config.ApiKey, config.ChecksumKey);
-        _unitOfWork = unitOfWork;
-        _publishEndpoint = publishEndpoint;
+        _transactionService = transactionService;
     }
 
     public async Task<string> CreatePaymentLinkAsync(long orderCode, decimal amount, string description, string returnUrl, string cancelUrl)
     {
         int intAmount = (int)Math.Round(amount);
-
         long expiredAt = DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds();
 
         try
@@ -48,78 +48,73 @@ public class PayOSService : IPayOSService
 
             var response = await _client.PaymentRequests.CreateAsync(paymentRequest);
 
-            _logger.LogInformation("Tạo link thanh toán thành công cho đơn {OrderCode}", orderCode);
+            _logger.LogInformation("Successfully created payment link for OrderCode {OrderCode}", orderCode);
 
             return response.CheckoutUrl;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi tạo PayOS Link cho Order: {OrderCode}", orderCode);
+            _logger.LogError(ex, "Error creating PayOS payment link for OrderCode {OrderCode}", orderCode);
             throw;
         }
     }
 
     public async Task<Result<bool>> ProcessWebhookAsync(Webhook webhook)
     {
-        // Khai báo biến bên ngoài try để catch có thể dùng log
         WebhookData? webhookData = null;
         try
         {
             // 1. Verify webhook
             webhookData = await _client.Webhooks.VerifyAsync(webhook);
 
-            _logger.LogInformation("[PaymentService] Processing webhook for OrderCode: {OrderCode}", webhookData.OrderCode);
+            _logger.LogInformation("Processing webhook for OrderCode {OrderCode}", webhookData.OrderCode);
 
-            // 2. Parse OrderId (Phải dùng PascalCase: .Description)
+            // 2. Parse OrderId from Description
             if (!Guid.TryParse(webhookData.Description, out Guid orderId))
             {
-                return Result<bool>.ResponseError("INVALID_ID", "Description is not a valid Guid", HttpStatusCode.BadRequest);
+                _logger.LogWarning("Invalid OrderId in webhook description: {Description}", webhookData.Description);
+                return Result<bool>.ResponseError("INVALID_ORDER_ID", "Description is not a valid Guid", HttpStatusCode.BadRequest);
             }
 
-            var transactionRepo = _unitOfWork.GetRepository<Models.Transaction>();
+            // 3. Create account details
+            var accountDetails = new AccountDetails(
+                webhookData.AccountNumber,
+                webhookData.CounterAccountName,
+                webhookData.CounterAccountNumber,
+                webhookData.CounterAccountBankName
+            );
 
-            // 3. Check trùng (Phải dùng PascalCase: .Reference)
-            var transaction = await transactionRepo.GetByPropertyAsync(t => t.Reference == webhookData.Reference);
+            // 4. Process payment using TransactionService with idempotent key
+            var result = await _transactionService.ProcessPaymentAsync(
+                orderId,
+                webhookData.OrderCode,
+                webhookData.Amount,
+                webhookData.Reference,
+                webhookData.Description,
+                accountDetails
+            );
 
-            if (transaction != null)
+            if (result.IsSuccess)
             {
-                _logger.LogWarning("[PaymentService] Reference {Reference} already processed.", webhookData.Reference);
-                return Result<bool>.ResponseSuccess(true, "Transaction already handled.");
+                _logger.LogInformation("Successfully processed webhook for OrderId {OrderId}, TransactionId {TransactionId}",
+                    orderId, result.Data?.Id);
+                return Result<bool>.ResponseSuccess(true, "Webhook processed successfully");
             }
-
-            // 4. Mapping (Tất cả dùng PascalCase)
-            var newTransaction = new Models.Transaction
+            else
             {
-                OrderId = orderId,
-                OrderCode = webhookData.OrderCode,
-                Amount = webhookData.Amount,
-                Reference = webhookData.Reference,
-                Description = webhookData.Description,
-                AccountNumber = webhookData.AccountNumber,
-                CounterAccountName = webhookData.CounterAccountName,
-                CounterAccountNumber = webhookData.CounterAccountNumber,
-                CounterAccountBankName = webhookData.CounterAccountBankName,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await transactionRepo.AddAsync(newTransaction);
-            await _unitOfWork.SaveAsync();
-
-            // 5. Notify Saga
-            await _publishEndpoint.Publish<IPaymentCompletedEvent>(new
-            {
-                OrderId = orderId,
-                TransactionId = newTransaction.Id
-            });
-
-            return Result<bool>.ResponseSuccess(true, "Success");
+                _logger.LogWarning("Failed to process webhook for OrderId {OrderId}: {Error}",
+                    orderId, result.Message);
+                return Result<bool>.ResponseError(result.Code, result.Message, result.StatusCode);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PaymentService] Error processing Webhook");
+            _logger.LogError(ex, "Error processing webhook for OrderCode {OrderCode}",
+                webhookData?.OrderCode ?? "Unknown");
             return Result<bool>.ResponseError("WEBHOOK_ERROR", ex.Message, HttpStatusCode.InternalServerError);
         }
     }
+}
 }
 
 public class PayOSConfig

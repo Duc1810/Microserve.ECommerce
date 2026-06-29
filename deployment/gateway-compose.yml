@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  apigateway:
+    container_name: apigateway
+    build:
+      context: ..
+      dockerfile: Gateways/APIGateway/Dockerfile
+    image: api.gateway
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+      # Backend service endpoints - configured via environment variables
+      AUTH_API_HOST: ${AUTH_API_HOST:-10.0.2.100}
+      AUTH_API_PORT: ${AUTH_API_PORT:-5000}
+      PRODUCT_API_HOST: ${PRODUCT_API_HOST:-10.0.2.100}
+      PRODUCT_API_PORT: ${PRODUCT_API_PORT:-5001}
+      CART_API_HOST: ${CART_API_HOST:-10.0.2.100}
+      CART_API_PORT: ${CART_API_PORT:-5002}
+      ORDER_API_HOST: ${ORDER_API_HOST:-10.0.2.100}
+      ORDER_API_PORT: ${ORDER_API_PORT:-5003}
+      EMAIL_API_HOST: ${EMAIL_API_HOST:-10.0.2.100}
+      EMAIL_API_PORT: ${EMAIL_API_PORT:-5004}
+      NOTIFICATION_API_HOST: ${NOTIFICATION_API_HOST:-10.0.2.100}
+      NOTIFICATION_API_PORT: ${NOTIFICATION_API_PORT:-5005}
+    ports:
+      - "80:8080"   # Public access port
+    restart: always
+    networks:
+      - gateway-network
+
+networks:
+  gateway-network:
+    driver: bridge

@@ -1,0 +1,173 @@
+global:
+  environment: Development
+
+  pgUser: "postgres"
+  pgPassword: "postgres"
+
+  rabbitUser: "guest"
+  rabbitPass: "guest"
+
+  redisPassword: "redispass123"
+
+  jwtIssuer: "http://authapi:8080"
+
+image:
+  tag: latest
+  pullPolicy: IfNotPresent
+
+infra:
+
+  postgres:
+    enabled: true
+    basketDb: "BasketDb"
+    orderDb: "OrderDb"
+    authDb: "AuthDb"
+
+  redis:
+    enabled: true
+    host: "redis-master"
+    port: 6379
+
+  rabbitmq:
+    enabled: true
+    host: "rabbitmq"
+    port: 5672
+
+  elasticsearch:
+    enabled: true
+    uri: "http://elasticsearch:9200"
+
+  consul:
+    enabled: true
+    address: "http://consul:8500"
+
+  ollama:
+    enabled: true
+    baseUrl: "http://ollama:11434"
+
+services:
+
+  authapi:
+    image: authentication.api
+    port: 8080
+
+    env:
+
+      ConnectionStrings__DefaultConnection: >
+        Host=authdb;
+        Port=5432;
+        Database=AuthDb;
+        Username=postgres;
+        Password=postgres
+
+      Authentication__RequireHttpsMetadata: "false"
+
+      MessageBroker__Host: "amqp://rabbitmq:5672"
+      MessageBroker__UserName: "guest"
+      MessageBroker__Password: "guest"
+
+      Elastic__Enabled: "true"
+      Elastic__Uri: "http://elasticsearch:9200"
+      Elastic__IndexPrefix: "ecommerce-auth"
+
+      MessageBroker__RoutingKeys__UserCreated: "user.created"
+
+  productapi:
+    image: product.api
+    port: 8080
+
+    env:
+
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;
+        Port=5432;
+        Database=BasketDb;
+        Username=postgres;
+        Password=postgres
+
+      Elasticsearch__Uri: "http://elasticsearch:9200"
+
+      Ollama__BaseUrl: "http://ollama:11434"
+      Ollama__Model: "nomic-embed-text"
+
+      Redis__Host: "redis-master"
+      Redis__Port: "6379"
+      Redis__Password: "redispass123"
+      Redis__Prefix: "ecommerce:dev:"
+
+  cartapi:
+    image: cart.api
+    port: 5027
+
+    env:
+
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;
+        Port=5432;
+        Database=BasketDb;
+        Username=postgres;
+        Password=postgres
+
+      GrpcSettings__ProductUrl: "http://productapi-service:7001"
+
+      Redis__Host: "redis-master"
+      Redis__Port: "6379"
+      Redis__Password: "redispass123"
+
+  orderapi:
+    image: order.api
+    port: 8080
+
+    env:
+
+      ConnectionStrings__DefaultConnection: >
+        Host=orderdb;
+        Port=5432;
+        Database=OrderDb;
+        Username=postgres;
+        Password=postgres
+
+      MessageBroker__Host: "amqp://rabbitmq:5672"
+      MessageBroker__UserName: "guest"
+      MessageBroker__Password: "guest"
+
+  emailapi:
+    image: email.api
+    port: 8080
+
+    env:
+
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;
+        Port=5432;
+        Database=BasketDb;
+        Username=postgres;
+        Password=postgres
+
+      MessageBroker__Host: "amqp://rabbitmq:5672"
+      MessageBroker__UserName: "guest"
+      MessageBroker__Password: "guest"
+
+      MessageBroker__RoutingKeys__UserCreated: "user.created"
+
+  notificationapi:
+    image: notification.api
+    port: 8080
+
+    env:
+
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;
+        Port=5432;
+        Database=BasketDb;
+        Username=postgres;
+        Password=postgres
+
+      MessageBroker__Host: "amqp://rabbitmq:5672"
+      MessageBroker__UserName: "guest"
+      MessageBroker__Password: "guest"
+
+  apigateway:
+    image: api.gateway
+    port: 8080
+    type: LoadBalancer

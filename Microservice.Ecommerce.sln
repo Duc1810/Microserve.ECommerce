@@ -90,6 +90,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ecommerce.Payment", "Ecomme
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService", "Ecommerce.Payment\PaymentService\PaymentService.csproj", "{7D92FFAE-F10E-4C0A-B99A-0688B56A915D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ecommerce.Dashboard", "Ecommerce.Dashboard", "{F2A8B3C4-5D6E-7F8A-9B0C-1D2E3F4A5B6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dashboard.Domain", "Services\Ecommerce.Dashboard\Dashboard.Domain\Dashboard.Domain.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dashboard.Application", "Services\Ecommerce.Dashboard\Dashboard.Application\Dashboard.Application.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F23456789012}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dashboard.Infrastructure", "Services\Ecommerce.Dashboard\Dashboard.Infrastructure\Dashboard.Infrastructure.csproj", "{C3D4E5F6-A7B8-9012-CDEF-345678901234}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dashboard.API", "Services\Ecommerce.Dashboard\Dashboard.API\Dashboard.API.csproj", "{D4E5F6A7-B8C9-0123-DEF4-456789012345}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -204,6 +214,22 @@ Global
 		{7D92FFAE-F10E-4C0A-B99A-0688B56A915D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D92FFAE-F10E-4C0A-B99A-0688B56A915D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D92FFAE-F10E-4C0A-B99A-0688B56A915D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3D4E5F6-A7B8-9012-CDEF-345678901234}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3D4E5F6-A7B8-9012-CDEF-345678901234}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3D4E5F6-A7B8-9012-CDEF-345678901234}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3D4E5F6-A7B8-9012-CDEF-345678901234}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4E5F6A7-B8C9-0123-DEF4-456789012345}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4E5F6A7-B8C9-0123-DEF4-456789012345}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4E5F6A7-B8C9-0123-DEF4-456789012345}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4E5F6A7-B8C9-0123-DEF4-456789012345}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -244,6 +270,11 @@ Global
 		{813FFEC1-350E-4B14-BED4-F29D5F37BAE1} = {95EE904B-BA43-46F3-9BB1-14441D09A7FB}
 		{E828578B-DB32-4344-90EE-5F9131B45651} = {DAB40F6B-874E-4388-BB8E-C9B9C4870C3F}
 		{7D92FFAE-F10E-4C0A-B99A-0688B56A915D} = {E828578B-DB32-4344-90EE-5F9131B45651}
+		{F2A8B3C4-5D6E-7F8A-9B0C-1D2E3F4A5B6C} = {DAB40F6B-874E-4388-BB8E-C9B9C4870C3F}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {F2A8B3C4-5D6E-7F8A-9B0C-1D2E3F4A5B6C}
+		{B2C3D4E5-F6A7-8901-BCDE-F23456789012} = {F2A8B3C4-5D6E-7F8A-9B0C-1D2E3F4A5B6C}
+		{C3D4E5F6-A7B8-9012-CDEF-345678901234} = {F2A8B3C4-5D6E-7F8A-9B0C-1D2E3F4A5B6C}
+		{D4E5F6A7-B8C9-0123-DEF4-456789012345} = {F2A8B3C4-5D6E-7F8A-9B0C-1D2E3F4A5B6C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2F316032-A9BC-45C6-992F-C1B365C6CFC8}

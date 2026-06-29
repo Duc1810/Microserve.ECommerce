@@ -1,18 +1,4 @@
 {
-  "GlobalConfiguration": {
-    "BaseUrl": "http://localhost:5255",
-    "HttpHandlerOptions": {
-      "DangerousAcceptAnyServerCertificateValidator": true
-    },
-    "ServiceDiscoveryProvider": {
-      "Host": "consul",
-      "Port": 8500,
-      "Type": "PollConsul",
-      "PollingInterval": 2000,
-      "Scheme": "http"
-
-    }
-  },
   "Routes": [
     {
       "SwaggerKey": "ecommerce-authentication",
@@ -21,8 +7,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "authAPI",
-          "Port": 8080
+          "Host": "${AUTH_API_HOST}",
+          "Port": "${AUTH_API_PORT}"
         }
       ],
       "DownstreamPathTemplate": "/api/v1/Auth/{everything}",
@@ -42,13 +28,13 @@
       "UpstreamPathTemplate": "/gateway/product/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
       "DownstreamScheme": "http",
-      "DownstreamPathTemplate": "/api/v1/Product/{everything}",
-      "ServiceName": "productservice",
-      "UseServiceDiscovery": true,
-      "LoadBalancerOptions": {
-        "Type": "RoundRobin"
-      },
-      "DownstreamHostAndPorts": []
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "${PRODUCT_API_HOST}",
+          "Port": "${PRODUCT_API_PORT}"
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Product/{everything}"
     },
     {
       "SwaggerKey": "ecommerce-cart",
@@ -57,8 +43,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "cartAPI",
-          "Port": 5027
+          "Host": "${CART_API_HOST}",
+          "Port": "${CART_API_PORT}"
         }
       ],
       "DownstreamPathTemplate": "/api/v1/Cart/{everything}",
@@ -80,8 +66,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "orderAPI",
-          "Port": 8080
+          "Host": "${ORDER_API_HOST}",
+          "Port": "${ORDER_API_PORT}"
         }
       ],
       "DownstreamPathTemplate": "/api/v1/Order/{everything}",
@@ -103,8 +89,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "emailAPI",
-          "Port": 8080
+          "Host": "${EMAIL_API_HOST}",
+          "Port": "${EMAIL_API_PORT}"
         }
       ],
       "DownstreamPathTemplate": "/api/v1/Email/{everything}",
@@ -126,8 +112,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "notificationAPI",
-          "Port": 8080
+          "Host": "${NOTIFICATION_API_HOST}",
+          "Port": "${NOTIFICATION_API_PORT}"
         }
       ],
       "DownstreamPathTemplate": "/api/v1/Notification/{everything}",

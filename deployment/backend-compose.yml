@@ -1,0 +1,417 @@
+version: "3.8"
+
+services:
+  messagebroker:
+    image: rabbitmq:management
+    hostname: ecommerce-mq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    networks:
+      - backend-network
+
+  basketdb:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${BASKET_DB:-BasketDb}
+    ports:
+       - "5433:5432"
+    volumes:
+      - postgres_basket:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${BASKET_DB:-BasketDb}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: always
+    networks:
+      - backend-network
+
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      OLAMA_MODEL_PATH: /models/olama-model.bin
+    volumes:
+        - ../olama-model.bin:/models/olama-model.bin:ro
+        - ollama_data:/root/.ollama
+    ports:
+        - "11434:11434"
+    restart: always
+    networks:
+      - backend-network
+
+  orderdb:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${ORDER_DB:-OrderDb}
+    ports:
+       - "5434:5432"
+    volumes:
+      - postgres_order:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${ORDER_DB:-OrderDb}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: always
+    networks:
+      - backend-network
+
+  authdb:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${AUTH_DB:-AuthDb}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_auth:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${AUTH_DB:-AuthDb}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: always
+    networks:
+      - backend-network
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-redispass123}", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    environment:
+      REDIS_REPLICATION_MODE: master
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispass123}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: always
+    networks:
+      - backend-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000" # Grafana UI (http://localhost:3000)
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - backend-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP http
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - backend-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ../:/etc/prometheus/ # Thử mount cả thư mục hiện tại vào
+      - ../prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    ports:
+      - "9090:9090" # Prometheus UI (http://localhost:9090)
+    networks:
+      - backend-network
+
+  promtail:
+    image: grafana/promtail:latest
+    networks:
+      - backend-network
+
+  seq:
+    image: datalust/seq:latest
+    environment:
+      # Optional: To persist logs across container restarts
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
+    ports:
+      - "5341:80" # Seq UI access port (http://localhost:5341)
+      - "5342:5341" # Ingestion port for logs
+    networks:
+      backend-network:
+        aliases:
+          - seq_server
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    healthcheck:
+        test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    restart: always
+    networks:
+      - backend-network
+
+  kibana:
+     image: docker.elastic.co/kibana/kibana:8.13.2
+     environment:
+       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+       - XPACK_SECURITY_ENABLED=false
+     ports:
+       - "5601:5601"
+     depends_on:
+       elasticsearch:
+         condition: service_healthy
+     restart: always
+     networks:
+       - backend-network
+
+  consul:
+    image: hashicorp/consul
+    command: agent -server -bootstrap-expect=1 -ui -client=0.0.0.0 -node=consul
+    container_name: consul         
+    hostname: consul
+    ports:
+      - "8500:8500"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8500/v1/status/leader"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    restart: unless-stopped
+    networks:
+      - backend-network
+
+  authAPI:
+    build:
+      context: ..                                      
+      dockerfile: Services/Ecommerce.Authentication/Authentication.API/Dockerfile
+    image: authentication.api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      SERVICE_HOST: authAPI
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=authdb;Port=5432;Database=${AUTH_DB:-AuthDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      AuthOptions__IssuerUri: http://authapi:8080
+      AuthOptions__TokenEndpoint: http://authapi:8080/connect/token
+      Authentication__RequireHttpsMetadata: "false"
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+      MessageBroker__RoutingKeys__UserCreated: user.created
+      Elastic__Enabled: "true"
+      Elastic__Uri: http://elasticsearch:9200
+      Elastic__IndexPrefix: ecommerce-auth
+      Elastic__Username:
+      Elastic__Password:
+    ports:
+      - "5000:8080"  # Expose to host for API Gateway access
+    depends_on:
+      authdb:
+        condition: service_healthy
+      consul:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+    restart: always
+    networks:
+      - backend-network
+
+  productAPI:
+    build:
+      context: ..
+      dockerfile: Services/Ecommerce.Production/Production.API/Dockerfile
+    image: product.api
+    container_name: productAPI
+    hostname: productAPI
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      SERVICE_HOST: productAPI
+      SERVICE_PORT: 8080
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      Authentication__Issuer: http://authapi:8080
+      Authentication__Jwks__Uri: http://authapi:8080/.well-known/openid-configuration/jwks
+      Authentication__RequireHttpsMetadata: "false"
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+      Elasticsearch__Uri: http://elasticsearch:9200
+      Ollama__BaseUrl: http://ollama:11434
+      Ollama__Model: nomic-embed-text
+      Ollama__TimeoutSeconds: "30"
+      Consul__Address: http://consul:8500
+      Redis__Host: redis
+      Redis__Port: "6379"
+      Redis__Password: ${REDIS_PASSWORD:-redispass123}
+      Redis__IsSSL: "false"
+      Redis__Prefix: "ecommerce:dev:"
+    ports:
+      - "5001:8080"  # Expose to host for API Gateway access
+      - "5246:7001"  # gRPC port for internal communication
+    depends_on:
+      basketdb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    restart: always
+    networks:
+      - backend-network
+
+  cartAPI:
+    build:
+      context: ..
+      dockerfile: Services/Ecommerce.Cart/Cart.API/Dockerfile  
+    image: cart.api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5027    
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      Authentication__Issuer: http://authapi:8080
+      Authentication__Jwks__Uri: http://authapi:8080/.well-known/openid-configuration/jwks
+      Authentication__RequireHttpsMetadata: "false"
+      GrpcSettings__ProductUrl: http://productAPI:7001
+      OrderApi__BaseAddress: http://orderAPI:8080
+      Redis__Host: redis
+      Redis__Port: "6379"
+      Redis__Password: ${REDIS_PASSWORD:-redispass123}
+      Redis__IsSSL: "false"
+      Redis__Prefix: "ecommerce:dev:"
+    ports:
+      - "5002:5027"  # Expose to host for API Gateway access
+    depends_on:
+      basketdb:
+        condition: service_healthy
+      productAPI:
+        condition: service_started
+    restart: always
+    networks:
+      - backend-network
+
+  orderAPI:
+    build:
+      context: ..
+      dockerfile: Services/Ecommerce.Order/Order.API/Dockerfile
+    image: order.api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development      
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=orderdb;Port=5432;Database=${ORDER_DB:-OrderDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      Authentication__Issuer: http://authapi:8080
+      Authentication__Jwks__Uri: http://authapi:8080/.well-known/openid-configuration/jwks
+      Authentication__RequireHttpsMetadata: "false"
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+    ports:
+      - "5003:8080"  # Expose to host for API Gateway access
+    depends_on:
+      orderdb:
+        condition: service_healthy
+      messagebroker:
+        condition: service_started
+    restart: always
+    networks:
+      - backend-network
+
+  emailAPI:
+    build:
+      context: ..
+      dockerfile: Services/Ecommerce.Email/Email.API/Dockerfile
+    image: email.api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+      MessageBroker__RoutingKeys__UserCreated: user.created
+    ports:
+      - "5004:8080"  # Expose to host for API Gateway access
+    depends_on:
+      basketdb:
+        condition: service_healthy
+      messagebroker:
+        condition: service_started
+    restart: always
+    networks:
+      - backend-network
+
+  notificationAPI:
+    build:
+      context: ..
+      dockerfile: Services/Ecommerce.Notification/Notification.API/Dockerfile
+    image: notification.api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >
+        Host=basketdb;Port=5432;Database=${BASKET_DB:-BasketDb};
+        Username=${PG_USER:-postgres};Password=${PG_PASSWORD:-postgres};Pooling=true
+      Authentication__Issuer: http://authapi:8080
+      Authentication__Jwks__Uri: http://authapi:8080/.well-known/openid-configuration/jwks
+      Authentication__RequireHttpsMetadata: "false"
+      MessageBroker__Host: amqp://messagebroker:5672
+      MessageBroker__UserName: ${RABBITMQ_DEFAULT_USER:-guest}
+      MessageBroker__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
+    ports:
+      - "5005:8080"  # Expose to host for API Gateway access
+    depends_on:
+      basketdb:
+        condition: service_healthy
+      messagebroker:
+        condition: service_started
+    restart: always
+    networks:
+      - backend-network
+
+volumes:
+  postgres_basket:
+  postgres_order:
+  postgres_auth:
+  redis_data:
+  es_data:
+  ollama_data:
+
+networks:
+  backend-network:
+    driver: bridge
